@@ -9,7 +9,16 @@ module Statsd (
   timing,
   histogram,
 ) where
- 
+
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Char8 as BSC
+import Data.Word
+import System.Time
+import System.Random
+import Data.ByteString.Builder (int64LE)
+import Crypto.Hash
+import Data.Byteable
+
 type Stat = String
  
 data StatsdClient = StatsdClient { host :: String
@@ -17,7 +26,7 @@ data StatsdClient = StatsdClient { host :: String
                                  , namespace :: Stat
                                  , key :: Maybe String
                                  }
-                                 
+
 client :: String -> Int -> Stat -> Maybe String -> StatsdClient
 client = StatsdClient
 
@@ -46,15 +55,37 @@ send client stat value stat_type = do
                then ""
                else namespace client ++ "."
   let message = prefix ++ stat ++ ":" ++ show value ++ "|" ++ show stat_type
+  let payload = BSC.pack message
   
   let payload = case key client of 
-                Nothing  -> message
-                Just key -> signed message
+                Nothing  -> payload
+                Just key -> signed payload
 
   return ()
-  
-signed :: String -> String
-signed = id
+
+type Nonce = BS.ByteString
+type Key = String
+
+signed :: BS.ByteString -> IO BS.ByteString
+signed payload = do
+  sec <- getClockTime >>= (\(TOD sec _) -> return sec)
+
+  gen <- getStdGen
+  let nonce = randomBytes 4 gen
+
+  sign sec nonce payload
+
+sign :: BS.ByteString -> BS.ByteString -> BS.ByteString
+sign key payload = let signature = toBytes (hmac key payload :: HMAC SHA256)
+                   in BS.append signature payload
+
+randomBytes :: Int -> StdGen -> Nonce
+randomBytes n g = BS.pack $ bytes n g
+  where
+    bytes :: Int -> StdGen -> [Word8]
+    bytes 0 _ = []
+    bytes n g = let (x, nextG) = next g
+                in fromIntegral x:bytes (n-1) nextG
 
 data Type = Count | Guage | Timing | Histogram
 
@@ -63,3 +94,4 @@ instance Show Type where
   show Guage = "g"
   show Timing = "ms"
   show Histogram = "h"
+  
