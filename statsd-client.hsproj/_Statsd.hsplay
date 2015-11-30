@@ -1,6 +1,0 @@
--- Haskell Playground 1.0
-import Statsd
-
-let statsd_client = client "127.0.0.1" 8126 "keith" Nothing
-
-increment statsd_client "bar"
