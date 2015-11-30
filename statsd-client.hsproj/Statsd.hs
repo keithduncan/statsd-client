@@ -60,13 +60,17 @@ timing client stat value = Statsd.send client stat value Timing
 histogram :: StatsdClient -> Stat -> Int -> IO ()
 histogram client stat value = Statsd.send client stat value Histogram
 
+encode :: Stat -> Stat -> Int -> Type -> B.ByteString
+encode namespace stat value stat_type =
+  let prefix = if null namespace
+               then ""
+               else namespace ++ "."
+      message = printf "%s%s:%s|%s" prefix stat (show value) (show stat_type)
+  in BC.pack message
+
 send :: StatsdClient -> Stat -> Int -> Type -> IO ()
 send client stat value stat_type = do
-  let prefix = if null $ namespace client
-               then ""
-               else namespace client ++ "."
-  let message = printf "%s%s:%s|%s" prefix stat (show value) (show stat_type)
-  let payload = BC.pack message
+  let payload = encode (namespace client) stat value stat_type
   
   payload <- case signingKey client of 
              Nothing  -> return payload
