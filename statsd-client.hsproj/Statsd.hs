@@ -25,15 +25,20 @@ import Network.Socket hiding (send, sendTo, recv, recvFrom)
 import Network.Socket.ByteString
 
 type Stat = String
- 
-data StatsdClient = StatsdClient { host :: String
-                                 , port :: Int
+
+data StatsdClient = StatsdClient { socket :: Socket
+                                 , addr :: SockAddr
                                  , namespace :: Stat
-                                 , key :: Maybe String
+                                 , signingKey :: Maybe String
                                  }
 
-client :: String -> Int -> Stat -> Maybe String -> StatsdClient
-client = StatsdClient
+client :: String -> Int -> Stat -> Maybe String -> IO StatsdClient
+client host port namespace key = do
+  addrInfos <- getAddrInfo Nothing (Just host) (Just $ show port)
+  let serverAddr = head addrInfos
+  
+  socket <- Network.Socket.socket (addrFamily serverAddr) Datagram defaultProtocol
+  return $ StatsdClient socket (addrAddress serverAddr) namespace key
 
 increment :: StatsdClient -> Stat -> IO ()
 increment client stat = count client stat 1
@@ -62,7 +67,7 @@ send client stat value stat_type = do
   let message = printf "%s%s:%s|%s" prefix stat (show value) (show stat_type)
   let payload = BC.pack message
   
-  payload <- case key client of 
+  payload <- case signingKey client of 
              Nothing  -> return payload
              Just key -> signed key payload
 
@@ -70,12 +75,7 @@ send client stat value stat_type = do
 
 sendPayload :: StatsdClient -> B.ByteString -> IO ()
 sendPayload client payload = do
-  addrinfos <- getAddrInfo Nothing (Just $ host client) (Just $ show $ port client)
-  let serveraddr = head addrinfos
-  
-  socket <- socket (addrFamily serveraddr) Datagram defaultProtocol
-  
-  Network.Socket.ByteString.sendTo socket payload $ addrAddress serveraddr
+  Network.Socket.ByteString.sendTo (Statsd.socket client) payload $ addr client
   return ()
 
 type Nonce = B.ByteString
