@@ -41,7 +41,20 @@ histogram :: StatsdClient -> Stat -> Int -> IO ()
 histogram client stat value = send client stat value Histogram
 
 send :: StatsdClient -> Stat -> Int -> Type -> IO ()
-send client stat value stat_type = undefined
+send client stat value stat_type = do
+  let prefix = if null $ namespace client
+               then ""
+               else namespace client ++ "."
+  let message = prefix ++ stat ++ ":" ++ show value ++ "|" ++ show stat_type
+  
+  let payload = case key client of 
+                Nothing  -> message
+                Just key -> signed message
+
+  return ()
+  
+signed :: String -> String
+signed = id
 
 data Type = Count | Guage | Timing | Histogram
 
