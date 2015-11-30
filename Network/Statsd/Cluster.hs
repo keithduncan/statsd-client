@@ -6,6 +6,11 @@ module Network.Statsd.Cluster (
   collector,
 
   Network.Statsd.Cluster.increment,
+  Network.Statsd.Cluster.decrement,
+  Network.Statsd.Cluster.count,
+  Network.Statsd.Cluster.gauge,
+  Network.Statsd.Cluster.timing,
+  Network.Statsd.Cluster.histogram,
 ) where
 
 import Network.Statsd as Statsd
@@ -23,8 +28,23 @@ collector host port stat key = do
   return $ Collector client
 
 increment :: Cluster -> Stat -> IO ()
-increment cluster stat = let collector = collectorForStat cluster stat
-                          in Statsd.increment (getClient collector) stat
+increment cluster stat = Statsd.increment (getClient $ collectorForStat cluster stat) stat
+
+decrement :: Cluster -> Stat -> IO ()
+decrement cluster stat = Statsd.decrement (getClient $ collectorForStat cluster stat) stat
+
+count :: Cluster -> Stat -> Int -> IO ()
+count cluster stat = Statsd.count (getClient $ collectorForStat cluster stat) stat
+
+gauge :: Cluster -> Stat -> Int -> IO ()
+gauge cluster stat = Statsd.gauge (getClient $ collectorForStat cluster stat) stat
+
+-- duration in milliseconds
+timing :: Cluster -> Stat -> Int -> IO ()
+timing cluster stat = Statsd.timing (getClient $ collectorForStat cluster stat) stat
+
+histogram :: Cluster -> Stat -> Int -> IO ()
+histogram cluster stat = Statsd.histogram (getClient $ collectorForStat cluster stat) stat
 
 collectorForStat :: Cluster -> Stat -> Collector
 collectorForStat (Cluster collectors) stat = let statBytes = BC.pack stat
