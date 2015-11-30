@@ -10,8 +10,8 @@ module Statsd (
   histogram,
 ) where
 
-import qualified Data.ByteString as BS
-import qualified Data.ByteString.Char8 as BSC
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as BC
 import Data.Word
 import System.Time
 import System.Random
@@ -55,7 +55,7 @@ send client stat value stat_type = do
                then ""
                else namespace client ++ "."
   let message = prefix ++ stat ++ ":" ++ show value ++ "|" ++ show stat_type
-  let payload = BSC.pack message
+  let payload = BC.pack message
   
   let payload = case key client of 
                 Nothing  -> payload
@@ -63,24 +63,25 @@ send client stat value stat_type = do
 
   return ()
 
-type Nonce = BS.ByteString
+type Nonce = B.ByteString
 type Key = String
 
-signed :: BS.ByteString -> IO BS.ByteString
-signed payload = do
+signed :: Key -> B.ByteString -> IO B.ByteString
+signed key payload = do
   sec <- getClockTime >>= (\(TOD sec _) -> return sec)
 
   gen <- getStdGen
   let nonce = randomBytes 4 gen
 
-  sign sec nonce payload
+  return $ sign key payload
 
-sign :: BS.ByteString -> BS.ByteString -> BS.ByteString
-sign key payload = let signature = toBytes (hmac key payload :: HMAC SHA256)
-                   in BS.append signature payload
+sign :: Key -> B.ByteString -> B.ByteString
+sign key payload = let keyBytes = BC.pack key
+                       signature = toBytes (hmac keyBytes payload :: HMAC SHA256)
+                   in B.append signature payload
 
 randomBytes :: Int -> StdGen -> Nonce
-randomBytes n g = BS.pack $ bytes n g
+randomBytes n g = B.pack $ bytes n g
   where
     bytes :: Int -> StdGen -> [Word8]
     bytes 0 _ = []
