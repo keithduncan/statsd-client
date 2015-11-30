@@ -31,7 +31,10 @@ data StatsdClient = StatsdClient { socket :: Net.Socket
                                  , signingKey :: Maybe String
                                  }
 
-client :: String -> Int -> Stat -> Maybe String -> IO StatsdClient
+type Hostname = String
+type Port = Int
+
+client :: Hostname -> Port -> Stat -> Maybe String -> IO StatsdClient
 client host port namespace key = do
   addrInfos <- Net.getAddrInfo Nothing (Just host) (Just $ show port)
   let serverAddr = head addrInfos
