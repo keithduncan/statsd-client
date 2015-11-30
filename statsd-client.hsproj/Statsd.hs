@@ -27,7 +27,6 @@ import Network.Socket.ByteString
 type Stat = String
 
 data StatsdClient = StatsdClient { socket :: Socket
-                                 , addr :: SockAddr
                                  , namespace :: Stat
                                  , signingKey :: Maybe String
                                  }
@@ -38,7 +37,9 @@ client host port namespace key = do
   let serverAddr = head addrInfos
   
   socket <- Network.Socket.socket (addrFamily serverAddr) Datagram defaultProtocol
-  return $ StatsdClient socket (addrAddress serverAddr) namespace key
+  connect socket $ addrAddress serverAddr
+
+  return $ StatsdClient socket namespace key
 
 increment :: StatsdClient -> Stat -> IO ()
 increment client stat = count client stat 1
@@ -75,7 +76,7 @@ send client stat value stat_type = do
 
 sendPayload :: StatsdClient -> B.ByteString -> IO ()
 sendPayload client payload = do
-  Network.Socket.ByteString.sendTo (Statsd.socket client) payload $ addr client
+  Network.Socket.ByteString.send (Statsd.socket client) payload
   return ()
 
 type Nonce = B.ByteString
