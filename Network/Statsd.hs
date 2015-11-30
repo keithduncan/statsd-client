@@ -1,7 +1,7 @@
-module Statsd (
+module Network.Statsd (
   StatsdClient,
   client,
-  
+
   increment,
   decrement,
   count,
@@ -21,23 +21,23 @@ import Crypto.Hash
 import Data.Byteable
 import Text.Printf
 
-import Network.Socket hiding (send, sendTo, recv, recvFrom)
-import Network.Socket.ByteString
+import qualified Network.Socket as Net hiding (send, sendTo, recv, recvFrom)
+import qualified Network.Socket.ByteString as Net
 
 type Stat = String
 
-data StatsdClient = StatsdClient { socket :: Socket
+data StatsdClient = StatsdClient { socket :: Net.Socket
                                  , namespace :: Stat
                                  , signingKey :: Maybe String
                                  }
 
 client :: String -> Int -> Stat -> Maybe String -> IO StatsdClient
 client host port namespace key = do
-  addrInfos <- getAddrInfo Nothing (Just host) (Just $ show port)
+  addrInfos <- Net.getAddrInfo Nothing (Just host) (Just $ show port)
   let serverAddr = head addrInfos
-  
-  socket <- Network.Socket.socket (addrFamily serverAddr) Datagram defaultProtocol
-  connect socket $ addrAddress serverAddr
+
+  socket <- Net.socket (Net.addrFamily serverAddr) Net.Datagram Net.defaultProtocol
+  Net.connect socket $ Net.addrAddress serverAddr
 
   return $ StatsdClient socket namespace key
 
@@ -48,17 +48,17 @@ decrement :: StatsdClient -> Stat -> IO ()
 decrement client stat = count client stat (-1)
 
 count :: StatsdClient -> Stat -> Int -> IO ()
-count client stat value = Statsd.send client stat value Count
-  
+count client stat value = send client stat value Count
+
 gauge :: StatsdClient -> Stat -> Int -> IO ()
-gauge client stat value = Statsd.send client stat value Guage
-  
+gauge client stat value = send client stat value Guage
+
 -- duration in milliseconds
 timing :: StatsdClient -> Stat -> Int -> IO ()
-timing client stat value = Statsd.send client stat value Timing
+timing client stat value = send client stat value Timing
 
 histogram :: StatsdClient -> Stat -> Int -> IO ()
-histogram client stat value = Statsd.send client stat value Histogram
+histogram client stat value = send client stat value Histogram
 
 encode :: Stat -> Stat -> Int -> Type -> B.ByteString
 encode namespace stat value stat_type =
@@ -76,7 +76,7 @@ send client stat value stat_type = do
 
 sendPayload :: StatsdClient -> B.ByteString -> IO ()
 sendPayload client payload = do
-  Network.Socket.ByteString.send (Statsd.socket client) payload
+  Net.send (socket client) payload
   return ()
 
 type Nonce = B.ByteString
@@ -90,7 +90,7 @@ signed (Just key) payload = do
 
   gen <- getStdGen
   let nonce = randomBytes 4 gen
-  
+
   let newPayload = B.concat [timestamp, nonce, payload]
 
   return $ sign key newPayload
@@ -115,4 +115,3 @@ instance Show Type where
   show Guage = "g"
   show Timing = "ms"
   show Histogram = "h"
-  
