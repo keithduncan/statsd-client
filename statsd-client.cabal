@@ -22,4 +22,5 @@ library
                  byteable >= 0.1.1,
                  cryptohash >= 0.11.6,
                  network >= 2.6.2.1,
-                 digest-pure >= 0.0.3
+                 digest-pure >= 0.0.3,
+                 time-units >= 1.0.0

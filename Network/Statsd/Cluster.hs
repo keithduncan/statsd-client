@@ -16,6 +16,7 @@ module Network.Statsd.Cluster (
 import Network.Statsd as Statsd
 import Data.Digest.Pure.CRC32
 import qualified Data.ByteString.Char8 as BC
+import Data.Time.Units
 
 data Cluster = Cluster { getCollectors :: [Collector] }
 cluster :: [Collector] -> Cluster
@@ -39,8 +40,7 @@ count cluster stat = Statsd.count (getClient $ collectorForStat cluster stat) st
 gauge :: Cluster -> Stat -> Int -> IO ()
 gauge cluster stat = Statsd.gauge (getClient $ collectorForStat cluster stat) stat
 
--- duration in milliseconds
-timing :: Cluster -> Stat -> Int -> IO ()
+timing :: Cluster -> Stat -> Millisecond -> IO ()
 timing cluster stat = Statsd.timing (getClient $ collectorForStat cluster stat) stat
 
 histogram :: Cluster -> Stat -> Int -> IO ()

@@ -25,6 +25,7 @@ import System.Random
 import Crypto.Hash
 import Data.Byteable
 import Text.Printf
+import Data.Time.Units
 
 import qualified Network.Socket as Net hiding (send, sendTo, recv, recvFrom)
 import qualified Network.Socket.ByteString as Net
@@ -61,9 +62,8 @@ count client stat value = send client stat value Count
 gauge :: StatsdClient -> Stat -> Int -> IO ()
 gauge client stat value = send client stat value Guage
 
--- duration in milliseconds
-timing :: StatsdClient -> Stat -> Int -> IO ()
-timing client stat value = send client stat value Timing
+timing :: StatsdClient -> Stat -> Millisecond -> IO ()
+timing client stat value = send client stat (fromIntegral value) Timing
 
 histogram :: StatsdClient -> Stat -> Int -> IO ()
 histogram client stat value = send client stat value Histogram
