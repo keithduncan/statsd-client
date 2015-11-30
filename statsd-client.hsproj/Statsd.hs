@@ -58,9 +58,9 @@ send client stat value stat_type = do
   let message = prefix ++ stat ++ ":" ++ show value ++ "|" ++ show stat_type
   let payload = BC.pack message
   
-  let payload = case key client of 
-                Nothing  -> payload
-                Just key -> signed payload
+  payload <- case key client of 
+             Nothing  -> return payload
+             Just key -> signed key payload
 
   return ()
 
