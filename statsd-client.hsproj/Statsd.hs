@@ -45,8 +45,8 @@ send client stat value stat_type = undefined
 
 data Type = Count | Guage | Timing | Histogram
 
-show :: Type -> String
-show Count = "c"
-show Guage = "g"
-show Timing = "ms"
-show Histogram = "h"
+instance Show Type where
+  show Count = "c"
+  show Guage = "g"
+  show Timing = "ms"
+  show Histogram = "h"
