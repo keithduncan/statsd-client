@@ -11,11 +11,12 @@ module Statsd (
 ) where
 
 import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as BLazy
 import qualified Data.ByteString.Char8 as BC
+import Data.ByteString.Builder (int64LE, toLazyByteString)
 import Data.Word
 import System.Time
 import System.Random
-import Data.ByteString.Builder (int64LE)
 import Crypto.Hash
 import Data.Byteable
 
@@ -69,11 +70,14 @@ type Key = String
 signed :: Key -> B.ByteString -> IO B.ByteString
 signed key payload = do
   sec <- getClockTime >>= (\(TOD sec _) -> return sec)
+  let timestamp = B.concat $ BLazy.toChunks $ toLazyByteString $ int64LE $ fromIntegral sec
 
   gen <- getStdGen
   let nonce = randomBytes 4 gen
+  
+  let newPayload = B.concat [timestamp, nonce, payload]
 
-  return $ sign key payload
+  return $ sign key newPayload
 
 sign :: Key -> B.ByteString -> B.ByteString
 sign key payload = let keyBytes = BC.pack key
