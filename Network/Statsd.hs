@@ -1,5 +1,10 @@
 module Network.Statsd (
   StatsdClient,
+
+  Hostname,
+  Port,
+  Stat,
+
   client,
 
   increment,
