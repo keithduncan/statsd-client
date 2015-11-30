@@ -13,12 +13,16 @@ module Statsd (
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BLazy
 import qualified Data.ByteString.Char8 as BC
-import Data.ByteString.Builder (int64LE, toLazyByteString)
+import Data.ByteString.Lazy.Builder (int64LE, toLazyByteString)
 import Data.Word
 import System.Time
 import System.Random
 import Crypto.Hash
 import Data.Byteable
+import Text.Printf
+
+import Network.Socket hiding (send, sendTo, recv, recvFrom)
+import Network.Socket.ByteString
 
 type Stat = String
  
@@ -38,30 +42,40 @@ decrement :: StatsdClient -> Stat -> IO ()
 decrement client stat = count client stat (-1)
 
 count :: StatsdClient -> Stat -> Int -> IO ()
-count client stat value = send client stat value Count
+count client stat value = Statsd.send client stat value Count
   
 gauge :: StatsdClient -> Stat -> Int -> IO ()
-gauge client stat value = send client stat value Guage
+gauge client stat value = Statsd.send client stat value Guage
   
 -- duration in milliseconds
 timing :: StatsdClient -> Stat -> Int -> IO ()
-timing client stat value = send client stat value Timing
+timing client stat value = Statsd.send client stat value Timing
 
 histogram :: StatsdClient -> Stat -> Int -> IO ()
-histogram client stat value = send client stat value Histogram
+histogram client stat value = Statsd.send client stat value Histogram
 
 send :: StatsdClient -> Stat -> Int -> Type -> IO ()
 send client stat value stat_type = do
   let prefix = if null $ namespace client
                then ""
                else namespace client ++ "."
-  let message = prefix ++ stat ++ ":" ++ show value ++ "|" ++ show stat_type
+  let message = printf "%s%s:%s|%s" prefix stat (show value) (show stat_type)
   let payload = BC.pack message
   
   payload <- case key client of 
              Nothing  -> return payload
              Just key -> signed key payload
 
+  sendPayload client payload
+
+sendPayload :: StatsdClient -> B.ByteString -> IO ()
+sendPayload client payload = do
+  addrinfos <- getAddrInfo Nothing (Just $ host client) (Just $ show $ port client)
+  let serveraddr = head addrinfos
+  
+  socket <- socket (addrFamily serveraddr) Datagram defaultProtocol
+  
+  Network.Socket.ByteString.sendTo socket payload $ addrAddress serveraddr
   return ()
 
 type Nonce = B.ByteString
