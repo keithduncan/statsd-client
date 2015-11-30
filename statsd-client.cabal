@@ -6,18 +6,9 @@ license: AllRightsReserved
 license-file: BSD
 copyright: © Keith Duncan
 maintainer: Keith Duncan
-build-depends:
 stability: experimental
 homepage: https://github.com/keithduncan/statsd-client
-package-url:
 bug-reports: https://github.com/keithduncan/statsd-client/issues
 synopsis: Statsd UDP client
-description:
 category: Network
 author: Keith Duncan
-tested-with:
-data-files:
-data-dir: ""
-extra-source-files:
-extra-tmp-files:
-extra-doc-files:
