@@ -71,12 +71,8 @@ encode namespace stat value stat_type =
 send :: StatsdClient -> Stat -> Int -> Type -> IO ()
 send client stat value stat_type = do
   let payload = encode (namespace client) stat value stat_type
-  
-  payload <- case signingKey client of 
-             Nothing  -> return payload
-             Just key -> signed key payload
-
-  sendPayload client payload
+  signedPayload <- signed (signingKey client) payload
+  sendPayload client signedPayload
 
 sendPayload :: StatsdClient -> B.ByteString -> IO ()
 sendPayload client payload = do
@@ -86,8 +82,9 @@ sendPayload client payload = do
 type Nonce = B.ByteString
 type Key = String
 
-signed :: Key -> B.ByteString -> IO B.ByteString
-signed key payload = do
+signed :: Maybe Key -> B.ByteString -> IO B.ByteString
+signed Nothing payload = return payload
+signed (Just key) payload = do
   sec <- getClockTime >>= (\(TOD sec _) -> return sec)
   let timestamp = B.concat $ BLazy.toChunks $ toLazyByteString $ int64LE $ fromIntegral sec
 
