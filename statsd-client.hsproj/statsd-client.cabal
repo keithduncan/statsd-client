@@ -1,0 +1,51 @@
+name: statsd-client
+version: 1.0
+cabal-version: 1.6
+build-type: Simple
+license: AllRightsReserved
+license-file: BSD
+copyright: © Keith Duncan
+maintainer: Keith Duncan
+build-depends:
+stability: experimental
+homepage: https://github.com/keithduncan/statsd-client
+package-url:
+bug-reports: https://github.com/keithduncan/statsd-client/issues
+synopsis: Statsd UDP client
+description:
+category: Network
+author: Keith Duncan
+tested-with:
+data-files:
+data-dir: ""
+extra-source-files:
+extra-tmp-files:
+extra-doc-files:
+Executable statsdclient
+  main-is: Statsd.hs
+  buildable: True
+  build-tools:
+  cpp-options:
+  cc-options:
+  ld-options:
+  pkgconfig-depends:
+  frameworks:
+  c-sources:
+  default-language:
+  other-languages:
+  default-extensions:
+  other-extensions:
+  extensions:
+  extra-libraries:
+  extra-lib-dirs:
+  includes:
+  install-includes:
+  include-dirs:
+  hs-source-dirs:
+  other-modules:
+  ghc-prof-options:
+  ghc-shared-options:
+  ghc-options:
+  hugs-options:
+  nhc98-options:
+  jhc-options:
