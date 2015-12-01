@@ -14,18 +14,23 @@ module Network.Statsd (
   histogram,
 ) where
 
+import Control.Monad
+
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BLazy
 import qualified Data.ByteString.Char8 as BC
 import Data.ByteString.Lazy.Builder (int64LE, toLazyByteString)
 import Data.Word
+import Data.Byteable
+
 import System.Time
+import System.IO.Error
+
 import Crypto.Hash
 import Crypto.Random.DRBG
-import Data.Byteable
+
 import Text.Printf
 import Data.Time.Units
-import Control.Monad
 
 import qualified Network.Socket as Net hiding (send, sendTo, recv, recvFrom)
 import qualified Network.Socket.ByteString as Net
@@ -40,15 +45,18 @@ data StatsdClient = StatsdClient { socket :: Net.Socket
 type Hostname = String
 type Port = Int
 
-client :: Hostname -> Port -> Stat -> Maybe String -> IO StatsdClient
+client :: Hostname -> Port -> Stat -> Maybe String -> IO (Maybe StatsdClient)
 client host port namespace key = do
-  addrInfos <- Net.getAddrInfo Nothing (Just host) (Just $ show port)
+  let hostnameLookup = Net.getAddrInfo Nothing (Just host) (Just $ show port)
+  addrInfos <- hostnameLookup
+
   let serverAddr = head addrInfos
 
   socket <- Net.socket (Net.addrFamily serverAddr) Net.Datagram Net.defaultProtocol
-  Net.connect socket $ Net.addrAddress serverAddr
 
-  return $ StatsdClient socket namespace key
+  catchIOError (Net.connect socket $ Net.addrAddress serverAddr) (const $ return ())
+
+  return $ Just $ StatsdClient socket namespace key
 
 increment :: StatsdClient -> Stat -> IO ()
 increment client stat = count client stat 1
