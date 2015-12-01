@@ -51,7 +51,7 @@ client host port namespace key =
   tryIOError (Net.getAddrInfo Nothing (Just host) (Just $ show port))
   >>= \(Right (addr:_)) -> tryIOError (Net.socket (Net.addrFamily addr) Net.Datagram Net.defaultProtocol)
   >>= \(Right socket) -> tryIOError (Net.connect socket $ Net.addrAddress addr)
-  >>= \_ -> return $ Just $ StatsdClient socket namespace key
+  >>= const (return $ Just $ StatsdClient socket namespace key)
 
 increment :: StatsdClient -> Stat -> IO ()
 increment client stat = count client stat 1
