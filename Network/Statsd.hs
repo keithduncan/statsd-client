@@ -65,18 +65,18 @@ decrement :: StatsdClient -> Stat -> IO ()
 decrement client stat = count client stat (-1)
 
 count :: StatsdClient -> Stat -> Int -> IO ()
-count client stat value = void $ send client stat value Count
+count client stat value = void $ send client $ encode (namespace client) stat value Count
 
 gauge :: StatsdClient -> Stat -> Int -> IO ()
-gauge client stat value = void $ send client stat value Guage
+gauge client stat value = void $ send client $ encode (namespace client) stat value Gauge
 
 timing :: StatsdClient -> Stat -> Millisecond -> IO ()
-timing client stat value = void $ send client stat (fromIntegral value) Timing
+timing client stat value = void $ send client $ encode (namespace client) stat (fromIntegral value) Timing
 
 histogram :: StatsdClient -> Stat -> Int -> IO ()
-histogram client stat value = void $ send client stat value Histogram
+histogram client stat value = void $ send client $ encode (namespace client) stat value Histogram
 
-encode :: Stat -> Stat -> Int -> Type -> B.ByteString
+encode :: Stat -> Stat -> Int -> Type -> Payload
 encode namespace stat value stat_type =
   let prefix = if null namespace
                then ""
@@ -84,16 +84,17 @@ encode namespace stat value stat_type =
       message = printf "%s%s:%s|%s" prefix stat (show value) (show stat_type)
   in BC.pack message
 
-send :: StatsdClient -> Stat -> Int -> Type -> IO (Either IOError ())
-send client stat value stat_type = do
-  let payload = encode (namespace client) stat value stat_type
+type Payload = B.ByteString
+
+send :: StatsdClient -> Payload -> IO (Either IOError ())
+send client payload = do
   signedPayload <- signed (signingKey client) payload
   tryIOError $ void $ Net.send (socket client) signedPayload
 
 type Nonce = B.ByteString
 type Key = String
 
-signed :: Maybe Key -> B.ByteString -> IO B.ByteString
+signed :: Maybe Key -> Payload -> IO Payload
 signed Nothing payload = return payload
 signed (Just key) payload = do
   (TOD sec _) <- getClockTime
@@ -106,15 +107,15 @@ signed (Just key) payload = do
 
   return $ sign key newPayload
 
-sign :: Key -> B.ByteString -> B.ByteString
+sign :: Key -> Payload -> Payload
 sign key payload = let keyBytes = BC.pack key
                        signature = toBytes (hmac keyBytes payload :: HMAC SHA256)
                     in B.append signature payload
 
-data Type = Count | Guage | Timing | Histogram
+data Type = Count | Gauge | Timing | Histogram
 
 instance Show Type where
   show Count = "c"
-  show Guage = "g"
+  show Gauge = "g"
   show Timing = "ms"
   show Histogram = "h"
