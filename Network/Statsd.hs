@@ -47,19 +47,11 @@ type Hostname = String
 type Port = Int
 
 client :: Hostname -> Port -> Stat -> Maybe String -> IO (Maybe StatsdClient)
-client host port namespace key = do
-  hostnameLookup <- try (Net.getAddrInfo Nothing (Just host) (Just $ show port)) :: IO (Either IOError [Net.AddrInfo])
-  case hostnameLookup of
-    Left err       -> return Nothing
-    Right (addr:_) -> do
-      socket <- try (Net.socket (Net.addrFamily addr) Net.Datagram Net.defaultProtocol) :: IO (Either IOError Net.Socket)
-      case socket of
-        Left err     -> return Nothing
-        Right socket -> do
-          result <- try (Net.connect socket $ Net.addrAddress addr) :: IO (Either IOError ())
-          case result of
-            Left err -> return Nothing
-            Right _  -> return $ Just $ StatsdClient socket namespace key
+client host port namespace key =
+  tryIOError (Net.getAddrInfo Nothing (Just host) (Just $ show port))
+  >>= \(Right (addr:_)) -> tryIOError (Net.socket (Net.addrFamily addr) Net.Datagram Net.defaultProtocol)
+  >>= \(Right socket) -> tryIOError (Net.connect socket $ Net.addrAddress addr)
+  >>= \_ -> return $ Just $ StatsdClient socket namespace key
 
 increment :: StatsdClient -> Stat -> IO ()
 increment client stat = count client stat 1
