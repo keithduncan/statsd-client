@@ -90,7 +90,7 @@ send client stat value stat_type = do
   sendPayload client signedPayload
 
 sendPayload :: StatsdClient -> B.ByteString -> IO ()
-sendPayload client payload = void (try $ Net.send (socket client) payload :: IO (Either IOError Int))
+sendPayload client payload = void (tryIOError $ Net.send (socket client) payload)
 
 type Nonce = B.ByteString
 type Key = String
