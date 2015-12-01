@@ -15,6 +15,7 @@ module Network.Statsd (
 ) where
 
 import Control.Monad
+import Control.Exception
 
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BLazy
@@ -47,16 +48,18 @@ type Port = Int
 
 client :: Hostname -> Port -> Stat -> Maybe String -> IO (Maybe StatsdClient)
 client host port namespace key = do
-  let hostnameLookup = Net.getAddrInfo Nothing (Just host) (Just $ show port)
-  addrInfos <- hostnameLookup
-
-  let serverAddr = head addrInfos
-
-  socket <- Net.socket (Net.addrFamily serverAddr) Net.Datagram Net.defaultProtocol
-
-  catchIOError (Net.connect socket $ Net.addrAddress serverAddr) (const $ return ())
-
-  return $ Just $ StatsdClient socket namespace key
+  hostnameLookup <- try (Net.getAddrInfo Nothing (Just host) (Just $ show port)) :: IO (Either IOError [Net.AddrInfo])
+  case hostnameLookup of
+    Left err       -> return Nothing
+    Right (addr:_) -> do
+      socket <- try (Net.socket (Net.addrFamily addr) Net.Datagram Net.defaultProtocol) :: IO (Either IOError Net.Socket)
+      case socket of
+        Left err     -> return Nothing
+        Right socket -> do
+          result <- try (Net.connect socket $ Net.addrAddress addr) :: IO (Either IOError ())
+          case result of
+            Left err -> return Nothing
+            Right _  -> return $ Just $ StatsdClient socket namespace key
 
 increment :: StatsdClient -> Stat -> IO ()
 increment client stat = count client stat 1
@@ -91,7 +94,7 @@ send client stat value stat_type = do
   sendPayload client signedPayload
 
 sendPayload :: StatsdClient -> B.ByteString -> IO ()
-sendPayload client payload = void $ Net.send (socket client) payload
+sendPayload client payload = void (try $ Net.send (socket client) payload :: IO (Either IOError Int))
 
 type Nonce = B.ByteString
 type Key = String
