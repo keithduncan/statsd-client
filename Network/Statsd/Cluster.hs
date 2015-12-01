@@ -15,7 +15,7 @@ import Data.Digest.Pure.CRC32
 import qualified Data.ByteString.Char8 as BC
 import Data.Time.Units
 
-data Cluster = Cluster { getCollector :: [StatsdClient] }
+data Cluster = Cluster [StatsdClient]
 cluster :: [StatsdClient] -> Cluster
 cluster = Cluster
 
