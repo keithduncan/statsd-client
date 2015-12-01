@@ -53,9 +53,9 @@ client host port namespace key = do
       \sock -> Net.connect sock (Net.addrAddress addr) >>
       return sock)
 
-  case socket of
-    Left e  -> return Nothing
-    Right s -> return $ Just $ StatsdClient s namespace key
+  return $ case socket of
+    Left e  -> Nothing
+    Right s -> Just $ StatsdClient s namespace key
 
 increment :: StatsdClient -> Stat -> IO ()
 increment client stat = count client stat 1
