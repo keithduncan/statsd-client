@@ -49,9 +49,9 @@ type Port = Int
 client :: Hostname -> Port -> Stat -> Maybe String -> IO (Maybe StatsdClient)
 client host port namespace key = do
   socket <- tryIOError $ Net.getAddrInfo Nothing (Just host) (Just $ show port) >>=
-    \(addr:_) -> Net.socket (Net.addrFamily addr) Net.Datagram Net.defaultProtocol >>=
-      \sock -> tryIOError (Net.connect sock $ Net.addrAddress addr) >>
-      return sock
+    (\(addr:_) -> Net.socket (Net.addrFamily addr) Net.Datagram Net.defaultProtocol >>=
+      \sock -> Net.connect sock (Net.addrAddress addr) >>
+      return sock)
 
   case socket of
     Left e  -> return Nothing
