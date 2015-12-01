@@ -91,7 +91,7 @@ type Key = String
 signed :: Maybe Key -> B.ByteString -> IO B.ByteString
 signed Nothing payload = return payload
 signed (Just key) payload = do
-  sec <- getClockTime >>= (\(TOD sec _) -> return sec)
+  (TOD sec _) <- getClockTime
   let timestamp = B.concat $ BLazy.toChunks $ toLazyByteString $ int64LE $ fromIntegral sec
 
   gen <- newGenIO :: IO CtrDRBG
