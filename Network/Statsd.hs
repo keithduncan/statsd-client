@@ -64,16 +64,16 @@ decrement :: StatsdClient -> Stat -> IO ()
 decrement client stat = count client stat (-1)
 
 count :: StatsdClient -> Stat -> Int -> IO ()
-count client stat value = send client stat value Count
+count client stat value = void $ send client stat value Count
 
 gauge :: StatsdClient -> Stat -> Int -> IO ()
-gauge client stat value = send client stat value Guage
+gauge client stat value = void $ send client stat value Guage
 
 timing :: StatsdClient -> Stat -> Millisecond -> IO ()
-timing client stat value = send client stat (fromIntegral value) Timing
+timing client stat value = void $ send client stat (fromIntegral value) Timing
 
 histogram :: StatsdClient -> Stat -> Int -> IO ()
-histogram client stat value = send client stat value Histogram
+histogram client stat value = void $ send client stat value Histogram
 
 encode :: Stat -> Stat -> Int -> Type -> B.ByteString
 encode namespace stat value stat_type =
@@ -83,14 +83,11 @@ encode namespace stat value stat_type =
       message = printf "%s%s:%s|%s" prefix stat (show value) (show stat_type)
   in BC.pack message
 
-send :: StatsdClient -> Stat -> Int -> Type -> IO ()
+send :: StatsdClient -> Stat -> Int -> Type -> IO (Either IOError ())
 send client stat value stat_type = do
   let payload = encode (namespace client) stat value stat_type
   signedPayload <- signed (signingKey client) payload
-  sendPayload client signedPayload
-
-sendPayload :: StatsdClient -> B.ByteString -> IO ()
-sendPayload client payload = void (tryIOError $ Net.send (socket client) payload)
+  tryIOError $ void $ Net.send (socket client) signedPayload
 
 type Nonce = B.ByteString
 type Key = String
