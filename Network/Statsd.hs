@@ -25,6 +25,7 @@ import Crypto.Random.DRBG
 import Data.Byteable
 import Text.Printf
 import Data.Time.Units
+import Control.Monad
 
 import qualified Network.Socket as Net hiding (send, sendTo, recv, recvFrom)
 import qualified Network.Socket.ByteString as Net
@@ -82,9 +83,7 @@ send client stat value stat_type = do
   sendPayload client signedPayload
 
 sendPayload :: StatsdClient -> B.ByteString -> IO ()
-sendPayload client payload = do
-  Net.send (socket client) payload
-  return ()
+sendPayload client payload = void $ Net.send (socket client) payload
 
 type Nonce = B.ByteString
 type Key = String
