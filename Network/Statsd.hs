@@ -20,8 +20,8 @@ import qualified Data.ByteString.Char8 as BC
 import Data.ByteString.Lazy.Builder (int64LE, toLazyByteString)
 import Data.Word
 import System.Time
-import System.Random
 import Crypto.Hash
+import Crypto.Random.DRBG
 import Data.Byteable
 import Text.Printf
 import Data.Time.Units
@@ -95,8 +95,8 @@ signed (Just key) payload = do
   sec <- getClockTime >>= (\(TOD sec _) -> return sec)
   let timestamp = B.concat $ BLazy.toChunks $ toLazyByteString $ int64LE $ fromIntegral sec
 
-  gen <- getStdGen
-  let nonce = randomBytes 4 gen
+  gen <- newGenIO :: IO CtrDRBG
+  let (nonce, _) = throwLeft $ genBytes 4 gen
 
   let newPayload = B.concat [timestamp, nonce, payload]
 
@@ -105,15 +105,7 @@ signed (Just key) payload = do
 sign :: Key -> B.ByteString -> B.ByteString
 sign key payload = let keyBytes = BC.pack key
                        signature = toBytes (hmac keyBytes payload :: HMAC SHA256)
-                   in B.append signature payload
-
-randomBytes :: Int -> StdGen -> Nonce
-randomBytes n g = B.pack $ bytes n g
-  where
-    bytes :: Int -> StdGen -> [Word8]
-    bytes 0 _ = []
-    bytes n g = let (x, nextG) = next g
-                in fromIntegral x:bytes (n-1) nextG
+                    in B.append signature payload
 
 data Type = Count | Guage | Timing | Histogram
 

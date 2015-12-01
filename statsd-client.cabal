@@ -23,4 +23,6 @@ library
                  cryptohash >= 0.11.6,
                  network >= 2.6.2.1,
                  digest-pure >= 0.0.3,
-                 time-units >= 1.0.0
+                 time-units >= 1.0.0,
+                 crypto-api >= 0.13.2,
+                 DRBG >= 0.5.5
