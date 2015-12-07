@@ -38,15 +38,15 @@ import qualified Network.Socket.ByteString as Net
 
 type Stat = String
 
-data StatsdClient = StatsdClient { socket :: Net.Socket
-                                 , namespace :: Stat
-                                 , signingKey :: Maybe String
+data StatsdClient = StatsdClient { getSocket :: Net.Socket
+                                 , getNamespace :: Stat
+                                 , getSigningKey :: Maybe Key
                                  }
 
 type Hostname = String
 type Port = Int
 
-client :: Hostname -> Port -> Stat -> Maybe String -> IO (Maybe StatsdClient)
+client :: Hostname -> Port -> Stat -> Maybe Key -> IO (Maybe StatsdClient)
 client host port namespace key = do
   socket <- tryIOError (do
     (addr:_) <- Net.getAddrInfo Nothing (Just host) (Just $ show port)
@@ -65,16 +65,16 @@ decrement :: StatsdClient -> Stat -> IO ()
 decrement client stat = count client stat (-1)
 
 count :: StatsdClient -> Stat -> Int -> IO ()
-count client stat value = void . send client $ encode (namespace client) stat value Count
+count client stat value = void . send client $ encode (getNamespace client) stat value Count
 
 gauge :: StatsdClient -> Stat -> Int -> IO ()
-gauge client stat value = void . send client $ encode (namespace client) stat value Gauge
+gauge client stat value = void . send client $ encode (getNamespace client) stat value Gauge
 
 timing :: StatsdClient -> Stat -> Millisecond -> IO ()
-timing client stat value = void . send client $ encode (namespace client) stat (fromIntegral value) Timing
+timing client stat value = void . send client $ encode (getNamespace client) stat (fromIntegral value) Timing
 
 histogram :: StatsdClient -> Stat -> Int -> IO ()
-histogram client stat value = void . send client $ encode (namespace client) stat value Histogram
+histogram client stat value = void . send client $ encode (getNamespace client) stat value Histogram
 
 encode :: Stat -> Stat -> Int -> Type -> Payload
 encode namespace stat value stat_type =
@@ -88,8 +88,8 @@ type Payload = B.ByteString
 
 send :: StatsdClient -> Payload -> IO (Either IOError ())
 send client payload = do
-  signedPayload <- signed (signingKey client) payload
-  tryIOError . void $ Net.send (socket client) signedPayload
+  signedPayload <- signed (getSigningKey client) payload
+  tryIOError . void $ Net.send (getSocket client) signedPayload
 
 type Nonce = B.ByteString
 type Key = String
