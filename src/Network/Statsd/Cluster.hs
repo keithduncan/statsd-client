@@ -17,7 +17,9 @@ import Data.Time.Units
 
 data Cluster = Cluster [StatsdClient]
 cluster :: [StatsdClient] -> Cluster
-cluster = Cluster
+cluster clients
+  | null clients = error "empty client list"
+  | otherwise    = Cluster clients
 
 increment :: Cluster -> Stat -> IO ()
 increment cluster stat = Statsd.increment (collectorForStat cluster stat) stat
