@@ -2,6 +2,8 @@ module Network.Statsd (
   StatsdClient,
   client,
 
+  fromURI,
+
   Hostname,
   Port,
   Stat,
