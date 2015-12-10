@@ -23,6 +23,7 @@ import qualified Data.ByteString.Char8 as BC
 import Data.ByteString.Lazy.Builder (int64LE, toLazyByteString)
 import Data.Word
 import Data.Byteable
+import Data.Maybe
 
 import System.Time
 import System.IO.Error
@@ -35,6 +36,7 @@ import Data.Time.Units
 
 import qualified Network.Socket as Net hiding (send, sendTo, recv, recvFrom)
 import qualified Network.Socket.ByteString as Net
+import Network.URI
 
 type Stat = String
 
@@ -45,6 +47,33 @@ data StatsdClient = StatsdClient { getSocket :: Net.Socket
 
 type Hostname = String
 type Port = Int
+
+fromURI :: URI -> IO (Maybe StatsdClient)
+fromURI uri = case uriAuthority uri of
+              Nothing   -> return Nothing
+              Just auth -> let hostname = uriRegName auth
+                               port = fromMaybe 8126 $ (actualPort . uriPort) auth
+                               prefix = replace '/' '.' (uriPath uri)
+                               key = let userInfo = uriUserInfo auth
+                                         init' = if null userInfo
+                                                 then ""
+                                                 else init userInfo
+                                         (user, pass) = case break (==':') init' of
+                                                        (u, ':':p) -> (u, p)
+                                                        _          -> ("", "")
+                                      in if null pass
+                                         then Nothing
+                                         else Just pass
+
+                           in client hostname port prefix key
+
+  where
+    replace :: Eq a => a -> a -> [a] -> [a]
+    replace from to list = (\a -> if a == from then to else a) <$> list
+
+    actualPort :: String -> Maybe Int
+    actualPort (':':xs) = (Just . read) xs
+    actualPort _        = Nothing
 
 client :: Hostname -> Port -> Stat -> Maybe Key -> IO (Maybe StatsdClient)
 client host port namespace key = do
