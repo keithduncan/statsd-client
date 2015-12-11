@@ -7,6 +7,7 @@ module Network.Statsd (
   Hostname,
   Port,
   Stat,
+  Key,
 
   increment,
   decrement,
