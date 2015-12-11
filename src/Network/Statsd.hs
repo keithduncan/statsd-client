@@ -80,10 +80,7 @@ fromURI uri = case uriAuthority uri of
 
     uriRegName' :: URIAuth -> String
     uriRegName' auth = let hostname = uriRegName auth
-                           stripped = if isIPv6address hostname
-                                      then (takeWhile (/=']') . dropWhile (=='[')) hostname
-                                      else hostname
-                        in stripped
+                        in (takeWhile (/=']') . dropWhile (=='[')) hostname
 
 client :: Hostname -> Port -> Stat -> Maybe Key -> IO (Maybe StatsdClient)
 client host port namespace key = do
