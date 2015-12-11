@@ -53,7 +53,7 @@ type Port = Int
 fromURI :: URI -> IO (Maybe StatsdClient)
 fromURI uri = case uriAuthority uri of
               Nothing   -> return Nothing
-              Just auth -> let hostname = uriRegName auth
+              Just auth -> let hostname = uriRegName' auth
                                port = fromMaybe 8126 $ (actualPort . uriPort) auth
                                prefix = replace '/' '.' (uriPath uri)
                                key = let userInfo = uriUserInfo auth
@@ -76,6 +76,13 @@ fromURI uri = case uriAuthority uri of
     actualPort :: String -> Maybe Int
     actualPort (':':xs) = (Just . read) xs
     actualPort _        = Nothing
+
+    uriRegName' :: URIAuth -> String
+    uriRegName' auth = let hostname = uriRegName auth
+                           stripped = if isIPv6address hostname
+                                      then (takeWhile (/=']') . dropWhile (=='[')) hostname
+                                      else hostname
+                        in stripped
 
 client :: Hostname -> Port -> Stat -> Maybe Key -> IO (Maybe StatsdClient)
 client host port namespace key = do
