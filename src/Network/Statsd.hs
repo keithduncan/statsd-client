@@ -51,9 +51,9 @@ data StatsdClient = StatsdClient { getSocket :: Net.Socket
 type Hostname = String
 type Port = Int
 
-fromURI :: URI -> IO (Maybe StatsdClient)
+fromURI :: URI -> IO StatsdClient
 fromURI uri = case uriAuthority uri of
-              Nothing   -> return Nothing
+              Nothing   -> fail "invalid URI"
               Just auth -> let hostname = uriRegName' auth
                                port = fromMaybe 8126 $ (actualPort . uriPort) auth
                                prefix = replace '/' '.' (uriPath uri)
@@ -82,17 +82,13 @@ fromURI uri = case uriAuthority uri of
     uriRegName' auth = let hostname = uriRegName auth
                         in (takeWhile (/=']') . dropWhile (=='[')) hostname
 
-client :: Hostname -> Port -> Stat -> Maybe Key -> IO (Maybe StatsdClient)
+client :: Hostname -> Port -> Stat -> Maybe Key -> IO StatsdClient
 client host port namespace key = do
-  socket <- tryIOError (do
-    (addr:_) <- Net.getAddrInfo Nothing (Just host) (Just $ show port)
-    sock <- Net.socket (Net.addrFamily addr) Net.Datagram Net.defaultProtocol
-    Net.connect sock (Net.addrAddress addr)
-    return sock)
+  (addr:_) <- Net.getAddrInfo Nothing (Just host) (Just $ show port)
+  sock <- Net.socket (Net.addrFamily addr) Net.Datagram Net.defaultProtocol
+  Net.connect sock (Net.addrAddress addr)
 
-  return $ case socket of
-    Left e  -> Nothing
-    Right s -> Just $ StatsdClient s namespace key
+  return $ StatsdClient sock namespace key
 
 increment :: StatsdClient -> Stat -> IO ()
 increment client stat = count client stat 1
