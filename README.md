@@ -3,7 +3,9 @@
 A port of [github/statsd-ruby](http://github.com/github/statsd-ruby) to Haskell.
 
 ### Implements
-- UDP stats protocol
+
+- IPv4 and IPv6 support
+- UDP statsd protocol
 - Metric types
   - Count
   - Gauge
