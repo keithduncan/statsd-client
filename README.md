@@ -18,8 +18,8 @@ A port of [github/statsd-ruby](http://github.com/github/statsd-ruby) to Haskell.
 
 ```ruby
 $ irb -rsocket
-irb(main):001:0> listener4 = UDPSocket.new.tap do |s|
-irb(main):002:1* s.bind("::", 8126)
+irb(main):001:0> listener= UDPSocket.new.tap do |s|
+irb(main):002:1* s.bind("127.0.0.1", 8126)
 irb(main):003:1> end
 => #<UDPSocket:fd 9>
 irb(main):004:0> loop do
