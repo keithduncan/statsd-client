@@ -55,8 +55,11 @@ fromURI :: URI -> IO StatsdClient
 fromURI uri = case uriAuthority uri of
               Nothing   -> fail "invalid URI"
               Just auth -> let hostname = uriRegName' auth
-                               port = fromMaybe 8126 $ (actualPort . uriPort) auth
-                               prefix = replace '/' '.' (uriPath uri)
+                               port = let port' = (stripLeading ':' . uriPort) auth
+                                       in if null port'
+                                          then 8126
+                                          else read port'
+                               prefix = replace '/' '.' ((stripLeading '/' . uriPath) uri)
                                key = let userInfo = uriUserInfo auth
                                          init' = if null userInfo
                                                  then ""
@@ -74,13 +77,14 @@ fromURI uri = case uriAuthority uri of
     replace :: Eq a => a -> a -> [a] -> [a]
     replace from to list = (\a -> if a == from then to else a) <$> list
 
-    actualPort :: String -> Maybe Int
-    actualPort (':':xs) = (Just . read) xs
-    actualPort _        = Nothing
-
     uriRegName' :: URIAuth -> String
     uriRegName' auth = let hostname = uriRegName auth
                         in (takeWhile (/=']') . dropWhile (=='[')) hostname
+
+    stripLeading :: Eq a => a -> [a] -> [a]
+    stripLeading x y@(y':ys')
+      | x == y'   = ys'
+      | otherwise = y
 
 client :: Hostname -> Port -> Stat -> Maybe Key -> IO StatsdClient
 client host port namespace key = do
