@@ -58,8 +58,8 @@ fromURI (URI "statsd:" (Just (URIAuth auth regname port)) path _ _) =
               then 8126
               else read $ stripLeading ':' port
       prefix = replace '/' '.' $ stripLeading '/' path
-      key = case break (==':') auth of
-              (u, ':':p) -> Just (stripTrailing '@' p)
+      key = case break (==':') (stripTrailing '@' auth) of
+              (u, ':':p) -> Just p
               _          -> Nothing
    in client regname' port' prefix key
 
