@@ -52,39 +52,39 @@ type Hostname = String
 type Port = Int
 
 fromURI :: URI -> IO StatsdClient
-fromURI uri = case uriAuthority uri of
-              Nothing   -> fail "invalid URI"
-              Just auth -> let hostname = uriRegName' auth
-                               port = let port' = (stripLeading ':' . uriPort) auth
-                                       in if null port'
-                                          then 8126
-                                          else read port'
-                               prefix = replace '/' '.' ((stripLeading '/' . uriPath) uri)
-                               key = let userInfo = uriUserInfo auth
-                                         init' = if null userInfo
-                                                 then ""
-                                                 else init userInfo
-                                         (user, pass) = case break (==':') init' of
-                                                        (u, ':':p) -> (u, p)
-                                                        _          -> ("", "")
-                                      in if null pass
-                                         then Nothing
-                                         else Just pass
-
-                           in client hostname port prefix key
+fromURI (URI "statsd:" (Just (URIAuth auth regname port)) path _ _) =
+  let regname' = uriRegName' regname
+      port' = if null port
+              then 8126
+              else read $ stripLeading ':' port
+      prefix = replace '/' '.' $ stripLeading '/' path
+      key = case break (==':') auth of
+              (u, ':':p) -> Just (stripTrailing '@' p)
+              _          -> Nothing
+   in client regname' port' prefix key
 
   where
     replace :: Eq a => a -> a -> [a] -> [a]
     replace from to list = (\a -> if a == from then to else a) <$> list
 
-    uriRegName' :: URIAuth -> String
-    uriRegName' auth = let hostname = uriRegName auth
-                        in (takeWhile (/=']') . dropWhile (=='[')) hostname
+    uriRegName' :: String -> String
+    uriRegName' = takeWhile (/=']') . dropWhile (=='[')
 
     stripLeading :: Eq a => a -> [a] -> [a]
+    stripLeading x [] = []
     stripLeading x y@(y':ys')
       | x == y'   = ys'
       | otherwise = y
+
+    stripTrailing :: Eq a => a -> [a] -> [a]
+    stripTrailing x [] = []
+    stripTrailing x xs = let init' = init xs
+                             last' = last xs
+                          in if last' == x
+                             then init'
+                             else xs
+
+fromURI uri = error $ "invalid URI" ++ show uri
 
 client :: Hostname -> Port -> Stat -> Maybe Key -> IO StatsdClient
 client host port namespace key = do
