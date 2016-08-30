@@ -7,6 +7,7 @@ module Network.Statsd (
   Hostname,
   Port,
   Stat,
+  Tags,
   Key,
 
   increment,
@@ -27,6 +28,7 @@ import Data.ByteString.Lazy.Builder (int64LE, toLazyByteString)
 import Data.Word
 import Data.Byteable
 import Data.Maybe
+import Data.List
 
 import System.Time
 import System.IO.Error
@@ -42,6 +44,7 @@ import qualified Network.Socket.ByteString as Net
 import Network.URI
 
 type Stat = String
+type Tags = [(String, String)]
 
 data StatsdClient = StatsdClient { getSocket :: Net.Socket
                                  , getNamespace :: Stat
@@ -94,30 +97,34 @@ client host port namespace key = do
 
   return $ StatsdClient sock namespace key
 
-increment :: StatsdClient -> Stat -> IO ()
+increment :: StatsdClient -> Stat -> Maybe Tags -> IO ()
 increment client stat = count client stat 1
 
-decrement :: StatsdClient -> Stat -> IO ()
+decrement :: StatsdClient -> Stat -> Maybe Tags -> IO ()
 decrement client stat = count client stat (-1)
 
-count :: StatsdClient -> Stat -> Int -> IO ()
-count client stat value = void . send client $ encode (getNamespace client) stat value Count
+count :: StatsdClient -> Stat -> Int -> Maybe Tags -> IO ()
+count client stat value tags = void . send client $ encode (getNamespace client) stat value Count tags
 
-gauge :: StatsdClient -> Stat -> Int -> IO ()
-gauge client stat value = void . send client $ encode (getNamespace client) stat value Gauge
+gauge :: StatsdClient -> Stat -> Int -> Maybe Tags -> IO ()
+gauge client stat value tags = void . send client $ encode (getNamespace client) stat value Gauge tags
 
-timing :: StatsdClient -> Stat -> Millisecond -> IO ()
-timing client stat value = void . send client $ encode (getNamespace client) stat (fromIntegral value) Timing
+timing :: StatsdClient -> Stat -> Millisecond -> Maybe Tags -> IO ()
+timing client stat value tags = void . send client $ encode (getNamespace client) stat (fromIntegral value) Timing tags
 
-histogram :: StatsdClient -> Stat -> Int -> IO ()
-histogram client stat value = void . send client $ encode (getNamespace client) stat value Histogram
+histogram :: StatsdClient -> Stat -> Int -> Maybe Tags -> IO ()
+histogram client stat value tags = void . send client $ encode (getNamespace client) stat value Histogram tags
 
-encode :: Stat -> Stat -> Int -> Type -> Payload
-encode namespace stat value stat_type =
+encode :: Stat -> Stat -> Int -> Type -> Maybe Tags -> Payload
+encode namespace stat value stat_type maybeTags =
   let prefix = if null namespace
                then ""
                else namespace ++ "."
-      message = printf "%s%s:%s|%s" prefix stat (show value) (show stat_type)
+      fmtTag x = (fst x) ++ ":" ++ (snd x)
+      tagSuffix = case maybeTags of
+                  Just tags -> "#" ++ (intercalate "," (map fmtTag tags))
+                  _ -> ""
+      message = printf "%s%s:%s|%s%s" prefix stat (show value) (show stat_type) tagSuffix
   in BC.pack message
 
 type Payload = B.ByteString
