@@ -1,4 +1,4 @@
-module Network.UdpClient (UdpClient(..), Hostname, Port, Key, client, fromURI, send) where
+module Network.UdpClient (UdpClient(..), Hostname, Port, Namespace, Key, client, fromURI, send) where
 
 import Control.Monad
 import qualified Data.ByteString as B
@@ -17,11 +17,12 @@ import Network.URI
 type Hostname = String
 type Port = Int
 type Key = String
+type Namespace = String
 type Payload = B.ByteString
 type Nonce = B.ByteString
 
 data UdpClient = UdpClient { getSocket :: Net.Socket
-                           , getNamespace :: String
+                           , getNamespace :: Namespace
                            , getSigningKey :: Maybe Key
                            }
 
@@ -60,7 +61,7 @@ fromURI (URI "statsd:" (Just (URIAuth auth regname port)) path _ _) =
 
 fromURI uri = error $ "invalid URI" ++ show uri
 
-client :: Hostname -> Port -> String -> Maybe Key -> IO UdpClient
+client :: Hostname -> Port -> Namespace -> Maybe Key -> IO UdpClient
 client host port namespace key = do
   (addr:_) <- Net.getAddrInfo Nothing (Just host) (Just $ show port)
   sock <- Net.socket (Net.addrFamily addr) Net.Datagram Net.defaultProtocol

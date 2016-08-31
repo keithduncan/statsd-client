@@ -15,8 +15,8 @@ import Data.Digest.Pure.CRC32
 import qualified Data.ByteString.Char8 as BC
 import Data.Time.Units
 
-data Cluster = Cluster [StatsdClient]
-cluster :: [StatsdClient] -> Cluster
+data Cluster = Cluster [UdpClient]
+cluster :: [UdpClient] -> Cluster
 cluster clients
   | null clients = error "empty client list"
   | otherwise    = Cluster clients
@@ -39,7 +39,7 @@ timing cluster stat = Statsd.timing (collectorForStat cluster stat) stat
 histogram :: Cluster -> Stat -> Int ->  IO ()
 histogram cluster stat = Statsd.histogram (collectorForStat cluster stat) stat
 
-collectorForStat :: Cluster -> Stat -> StatsdClient
+collectorForStat :: Cluster -> Stat -> UdpClient
 collectorForStat (Cluster collectors) stat = let statBytes = BC.pack stat
                                                  idx = fromIntegral (crc32 statBytes) `mod` length collectors
                                               in collectors !! idx
