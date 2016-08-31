@@ -33,10 +33,13 @@ timing client stat value tags = void . send client $ fmtDogStatsdDatagram (getNa
 histogram :: UdpClient -> Stat -> Int -> Tags -> IO ()
 histogram client stat value tags = void . send client $ fmtDogStatsdDatagram (getNamespace client) stat value Histogram tags
 
+fmtTag :: (String, String) -> String
+fmtTag (a, "") = a
+fmtTag (a, b) = a ++ ":" ++ b
+
 fmtDogStatsdDatagram :: Stat -> Stat -> Int -> Type -> Tags -> String
 fmtDogStatsdDatagram namespace stat value stat_type [] = fmtDatagram namespace stat value stat_type
 fmtDogStatsdDatagram namespace stat value stat_type tags =
   let statsdDatagram = fmtDatagram namespace stat value stat_type
-      fmtTag x = (fst x) ++ ":" ++ (snd x)
-      tagSuffix = intercalate "," (map fmtTag tags)
+      tagSuffix = intercalate "," $ fmtTag <$> tags
   in printf "%s#%s" statsdDatagram tagSuffix
