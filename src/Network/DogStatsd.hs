@@ -1,4 +1,15 @@
-module Network.DogStatsd (UdpClient, dogStatsdClient, fromURI, increment, decrement, count, gauge, timing, histogram) where
+module Network.DogStatsd (
+  UdpClient
+, dogStatsdClient
+, fromURI
+
+, increment
+, decrement
+, count
+, gauge
+, timing
+, histogram
+) where
 
 import Network.Statsd (Stat, Type(..), fmtDatagram)
 import Network.UdpClient(UdpClient(..), Hostname, Port, Namespace, Key, client, fromURI, send)

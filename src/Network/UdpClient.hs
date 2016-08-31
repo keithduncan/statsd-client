@@ -1,4 +1,13 @@
-module Network.UdpClient (UdpClient(..), Hostname, Port, Namespace, Key, client, fromURI, send) where
+module Network.UdpClient (
+  UdpClient(..)
+, Hostname
+, Port
+, Namespace
+, Key
+, client
+, fromURI
+, send
+) where
 
 import Control.Monad
 import qualified Data.ByteString as B

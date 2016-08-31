@@ -4,7 +4,6 @@ module Network.Statsd (
   fromURI,
 
   Stat,
-
   Type(..),
   fmtDatagram,
 
