@@ -115,16 +115,22 @@ timing client stat value tags = void . send client $ encode (getNamespace client
 histogram :: StatsdClient -> Stat -> Int -> Maybe Tags -> IO ()
 histogram client stat value tags = void . send client $ encode (getNamespace client) stat value Histogram tags
 
-encode :: Stat -> Stat -> Int -> Type -> Maybe Tags -> Payload
-encode namespace stat value stat_type maybeTags =
-  let prefix = if null namespace
-               then ""
-               else namespace ++ "."
+fmtStatsdDatagram :: Stat -> Stat -> Int -> Type -> String
+fmtStatsdDatagram namespace stat value stat_type =
+  let prefix = if null namespace then "" else namespace ++ "."
+  in printf "%s%s:%s|%s" prefix stat (show value) (show stat_type)
+
+fmtDatagram :: Stat -> Stat -> Int -> Type -> Maybe Tags -> String
+fmtDatagram namespace stat value stat_type Nothing = fmtStatsdDatagram namespace stat value stat_type
+fmtDatagram namespace stat value stat_type (Just tags) =
+  let statsdDatagram = fmtStatsdDatagram namespace stat value stat_type
       fmtTag x = (fst x) ++ ":" ++ (snd x)
-      tagSuffix = case maybeTags of
-                  Just tags -> "#" ++ (intercalate "," (map fmtTag tags))
-                  _ -> ""
-      message = printf "%s%s:%s|%s%s" prefix stat (show value) (show stat_type) tagSuffix
+      tagSuffix = intercalate "," (map fmtTag tags)
+  in printf "%s#%s" statsdDatagram tagSuffix
+
+encode :: Stat -> Stat -> Int -> Type -> Maybe Tags -> Payload
+encode namespace stat value stat_type tags =
+  let message = fmtDatagram namespace stat value stat_type tags
   in BC.pack message
 
 type Payload = B.ByteString
