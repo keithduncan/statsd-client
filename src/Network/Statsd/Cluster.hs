@@ -21,22 +21,22 @@ cluster clients
   | null clients = error "empty client list"
   | otherwise    = Cluster clients
 
-increment :: Cluster -> Stat -> Maybe Statsd.Tags -> IO ()
+increment :: Cluster -> Stat -> Statsd.Tags -> IO ()
 increment cluster stat = Statsd.increment (collectorForStat cluster stat) stat
 
-decrement :: Cluster -> Stat -> Maybe Statsd.Tags -> IO ()
+decrement :: Cluster -> Stat -> Statsd.Tags -> IO ()
 decrement cluster stat = Statsd.decrement (collectorForStat cluster stat) stat
 
-count :: Cluster -> Stat -> Int -> Maybe Statsd.Tags -> IO ()
+count :: Cluster -> Stat -> Int -> Statsd.Tags -> IO ()
 count cluster stat = Statsd.count (collectorForStat cluster stat) stat
 
-gauge :: Cluster -> Stat -> Int -> Maybe Statsd.Tags -> IO ()
+gauge :: Cluster -> Stat -> Int -> Statsd.Tags -> IO ()
 gauge cluster stat = Statsd.gauge (collectorForStat cluster stat) stat
 
-timing :: Cluster -> Stat -> Millisecond -> Maybe Statsd.Tags -> IO ()
+timing :: Cluster -> Stat -> Millisecond -> Statsd.Tags -> IO ()
 timing cluster stat = Statsd.timing (collectorForStat cluster stat) stat
 
-histogram :: Cluster -> Stat -> Int -> Maybe Statsd.Tags -> IO ()
+histogram :: Cluster -> Stat -> Int -> Statsd.Tags -> IO ()
 histogram cluster stat = Statsd.histogram (collectorForStat cluster stat) stat
 
 collectorForStat :: Cluster -> Stat -> StatsdClient

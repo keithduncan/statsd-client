@@ -97,22 +97,22 @@ client host port namespace key = do
 
   return $ StatsdClient sock namespace key
 
-increment :: StatsdClient -> Stat -> Maybe Tags -> IO ()
+increment :: StatsdClient -> Stat -> Tags -> IO ()
 increment client stat = count client stat 1
 
-decrement :: StatsdClient -> Stat -> Maybe Tags -> IO ()
+decrement :: StatsdClient -> Stat -> Tags -> IO ()
 decrement client stat = count client stat (-1)
 
-count :: StatsdClient -> Stat -> Int -> Maybe Tags -> IO ()
+count :: StatsdClient -> Stat -> Int -> Tags -> IO ()
 count client stat value tags = void . send client $ encode (getNamespace client) stat value Count tags
 
-gauge :: StatsdClient -> Stat -> Int -> Maybe Tags -> IO ()
+gauge :: StatsdClient -> Stat -> Int -> Tags -> IO ()
 gauge client stat value tags = void . send client $ encode (getNamespace client) stat value Gauge tags
 
-timing :: StatsdClient -> Stat -> Millisecond -> Maybe Tags -> IO ()
+timing :: StatsdClient -> Stat -> Millisecond -> Tags -> IO ()
 timing client stat value tags = void . send client $ encode (getNamespace client) stat (fromIntegral value) Timing tags
 
-histogram :: StatsdClient -> Stat -> Int -> Maybe Tags -> IO ()
+histogram :: StatsdClient -> Stat -> Int -> Tags -> IO ()
 histogram client stat value tags = void . send client $ encode (getNamespace client) stat value Histogram tags
 
 fmtStatsdDatagram :: Stat -> Stat -> Int -> Type -> String
@@ -120,15 +120,15 @@ fmtStatsdDatagram namespace stat value stat_type =
   let prefix = if null namespace then "" else namespace ++ "."
   in printf "%s%s:%s|%s" prefix stat (show value) (show stat_type)
 
-fmtDatagram :: Stat -> Stat -> Int -> Type -> Maybe Tags -> String
-fmtDatagram namespace stat value stat_type Nothing = fmtStatsdDatagram namespace stat value stat_type
-fmtDatagram namespace stat value stat_type (Just tags) =
+fmtDatagram :: Stat -> Stat -> Int -> Type -> Tags -> String
+fmtDatagram namespace stat value stat_type [] = fmtStatsdDatagram namespace stat value stat_type
+fmtDatagram namespace stat value stat_type tags =
   let statsdDatagram = fmtStatsdDatagram namespace stat value stat_type
       fmtTag x = (fst x) ++ ":" ++ (snd x)
       tagSuffix = intercalate "," (map fmtTag tags)
   in printf "%s#%s" statsdDatagram tagSuffix
 
-encode :: Stat -> Stat -> Int -> Type -> Maybe Tags -> Payload
+encode :: Stat -> Stat -> Int -> Type -> Tags -> Payload
 encode namespace stat value stat_type tags =
   let message = fmtDatagram namespace stat value stat_type tags
   in BC.pack message
