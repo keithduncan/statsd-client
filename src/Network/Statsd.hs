@@ -1,5 +1,6 @@
 module Network.Statsd (
   statsdClient,
+  fromURI,
 
   Stat,
   Type(..),
