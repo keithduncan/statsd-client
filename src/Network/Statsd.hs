@@ -1,7 +1,5 @@
 module Network.Statsd (
-  UdpClient,
   statsdClient,
-  fromURI,
 
   Stat,
   Type(..),
@@ -15,7 +13,7 @@ module Network.Statsd (
   histogram,
 ) where
 
-import Network.Statsd.UdpClient(UdpClient(..), Hostname, Port, Namespace, Key, client, fromURI, send)
+import Network.Statsd.UdpClient(UdpClient(..), fromURI, send)
 
 import Control.Monad
 import Data.Maybe
@@ -41,18 +39,16 @@ decrement :: UdpClient -> Stat -> IO ()
 decrement client stat = count client stat (-1)
 
 count :: UdpClient -> Stat -> Int -> IO ()
-count client stat value = void . send client $ fmtDatagram (getNamespace client) stat value Count
+count client stat value = void . send client $ fmtDatagram stat value Count
 
 gauge :: UdpClient -> Stat -> Int -> IO ()
-gauge client stat value = void . send client $ fmtDatagram (getNamespace client) stat value Gauge
+gauge client stat value = void . send client $ fmtDatagram stat value Gauge
 
 timing :: UdpClient -> Stat -> Millisecond -> IO ()
-timing client stat value = void . send client $ fmtDatagram (getNamespace client) stat (fromIntegral value) Timing
+timing client stat value = void . send client $ fmtDatagram stat (fromIntegral value) Timing
 
 histogram :: UdpClient -> Stat -> Int -> IO ()
-histogram client stat value = void . send client $ fmtDatagram (getNamespace client) stat value Histogram
+histogram client stat value = void . send client $ fmtDatagram stat value Histogram
 
-fmtDatagram :: Stat -> Stat -> Int -> Type -> String
-fmtDatagram namespace stat value stat_type =
-  let prefix = if null namespace then "" else namespace ++ "."
-  in printf "%s%s:%s|%s" prefix stat (show value) (show stat_type)
+fmtDatagram :: Stat -> Int -> Type -> String
+fmtDatagram stat value stat_type = printf "%s:%s|%s" stat (show value) (show stat_type)

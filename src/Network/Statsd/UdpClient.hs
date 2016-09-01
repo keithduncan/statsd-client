@@ -1,10 +1,5 @@
 module Network.Statsd.UdpClient (
-  UdpClient(..)
-, Hostname
-, Port
-, Namespace
-, Key
-, client
+  UdpClient
 , fromURI
 , send
 ) where
@@ -79,7 +74,9 @@ client host port namespace key = do
   return $ UdpClient sock namespace key
 
 send :: UdpClient -> String -> IO (Either IOError ())
-send client message = do
+send client datagram = do
+  let namespace = getNamespace client
+  let message = if null namespace then datagram else namespace ++ "." ++ datagram
   signedPayload <- signed (getSigningKey client) (BC.pack message)
   tryIOError . void $ Net.send (getSocket client) signedPayload
 

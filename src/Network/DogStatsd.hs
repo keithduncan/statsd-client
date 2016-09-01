@@ -1,8 +1,5 @@
 module Network.DogStatsd (
-  UdpClient
-, dogStatsdClient
-, fromURI
-
+ dogStatsdClient
 , increment
 , decrement
 , count
@@ -12,7 +9,7 @@ module Network.DogStatsd (
 ) where
 
 import Network.Statsd (Stat, Type(..), fmtDatagram)
-import Network.Statsd.UdpClient(UdpClient(..), Hostname, Port, Namespace, Key, client, fromURI, send)
+import Network.Statsd.UdpClient(UdpClient(..), fromURI, send)
 
 import Control.Monad
 import Data.Maybe
@@ -33,24 +30,24 @@ decrement :: UdpClient -> Stat -> Tags -> IO ()
 decrement client stat = count client stat (-1)
 
 count :: UdpClient -> Stat -> Int -> Tags -> IO ()
-count client stat value tags = void . send client $ fmtDogStatsdDatagram (getNamespace client) stat value Count tags
+count client stat value tags = void . send client $ fmtDogStatsdDatagram stat value Count tags
 
 gauge :: UdpClient -> Stat -> Int -> Tags -> IO ()
-gauge client stat value tags = void . send client $ fmtDogStatsdDatagram (getNamespace client) stat value Gauge tags
+gauge client stat value tags = void . send client $ fmtDogStatsdDatagram stat value Gauge tags
 
 timing :: UdpClient -> Stat -> Millisecond -> Tags -> IO ()
-timing client stat value tags = void . send client $ fmtDogStatsdDatagram (getNamespace client) stat (fromIntegral value) Timing tags
+timing client stat value tags = void . send client $ fmtDogStatsdDatagram stat (fromIntegral value) Timing tags
 
 histogram :: UdpClient -> Stat -> Int -> Tags -> IO ()
-histogram client stat value tags = void . send client $ fmtDogStatsdDatagram (getNamespace client) stat value Histogram tags
+histogram client stat value tags = void . send client $ fmtDogStatsdDatagram stat value Histogram tags
 
 fmtTag :: (String, String) -> String
 fmtTag (a, "") = a
 fmtTag (a, b) = a ++ ":" ++ b
 
-fmtDogStatsdDatagram :: Stat -> Stat -> Int -> Type -> Tags -> String
-fmtDogStatsdDatagram namespace stat value stat_type [] = fmtDatagram namespace stat value stat_type
-fmtDogStatsdDatagram namespace stat value stat_type tags =
-  let statsdDatagram = fmtDatagram namespace stat value stat_type
+fmtDogStatsdDatagram :: Stat -> Int -> Type -> Tags -> String
+fmtDogStatsdDatagram stat value stat_type [] = fmtDatagram stat value stat_type
+fmtDogStatsdDatagram stat value stat_type tags =
+  let statsdDatagram = fmtDatagram stat value stat_type
       tagSuffix = intercalate "," $ fmtTag <$> tags
   in printf "%s|#%s" statsdDatagram tagSuffix

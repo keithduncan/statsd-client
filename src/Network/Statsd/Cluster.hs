@@ -11,6 +11,8 @@ module Network.Statsd.Cluster (
 ) where
 
 import Network.Statsd as Statsd
+import Network.Statsd.UdpClient(UdpClient)
+
 import Data.Digest.Pure.CRC32
 import qualified Data.ByteString.Char8 as BC
 import Data.Time.Units
