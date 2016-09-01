@@ -29,13 +29,13 @@ Start sending metrics
 import Network.Statsd
 
 -- error handling omitted
-client <- statsdClient "statsd://127.0.0.1:8126/prefix"
+client <- statsdClient "statsd://127.0.0.1:8125/prefix"
 
 increment client "requests"
 histogram client "numOfFilesCreated" 5
 
 -- error handling omitted
-client' <- statsdClient "statsd://:mysecret@127.0.0.1:8126/prefix"
+client' <- statsdClient "statsd://:mysecret@127.0.0.1:8125/prefix"
 
 increment client' "requests"
 histogram client' "numOfFilesCreated" 5
@@ -57,7 +57,7 @@ Will result in these UDP packets being sent and received:
 import Network.DogStatsd
 
 -- error handling omitted
-client <- dogStatsdClient "statsd://127.0.0.1:8126/prefix"
+client <- dogStatsdClient "statsd://127.0.0.1:8125/prefix"
 
 -- Don't send any tags
 increment client "requests" []
