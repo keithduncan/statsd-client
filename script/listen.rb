@@ -1,3 +1,5 @@
+# Simple test script to listen to UDP traffic.
+
 require "socket"
 
 listener= UDPSocket.new.tap do |s|
