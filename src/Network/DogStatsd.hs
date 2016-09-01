@@ -53,4 +53,4 @@ fmtDogStatsdDatagram namespace stat value stat_type [] = fmtDatagram namespace s
 fmtDogStatsdDatagram namespace stat value stat_type tags =
   let statsdDatagram = fmtDatagram namespace stat value stat_type
       tagSuffix = intercalate "," $ fmtTag <$> tags
-  in printf "%s#%s" statsdDatagram tagSuffix
+  in printf "%s|#%s" statsdDatagram tagSuffix
