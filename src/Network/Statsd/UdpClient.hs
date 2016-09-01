@@ -1,4 +1,4 @@
-module Network.UdpClient (
+module Network.Statsd.UdpClient (
   UdpClient(..)
 , Hostname
 , Port
