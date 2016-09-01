@@ -51,7 +51,7 @@ Will result in these UDP packets being sent and received:
 [#<UDPSocket:fd 9>, ["A\x94\a\xBD\x8C9\x00\tU\xD0\x87\x8F\x9A\xCD\xC5\xA2l\xCA&\xA7T7\xEFT8\x9F\\b\xF7\xEB\x10\xD2\x06\\mV\x00\x00\x00\x00j\x86\xCD\xCBprefix.numOfFilesCreated:5|h", #<Addrinfo: 127.0.0.1:56756 UDP>, 0]]
 ```
 
- Send metrids to dogstatsd:
+ Send metrics to dogstatsd:
 
  ``` haskell
 import Network.DogStatsd
