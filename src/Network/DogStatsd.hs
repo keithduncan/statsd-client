@@ -46,8 +46,8 @@ fmtTag (a, "") = a
 fmtTag (a, b) = a ++ ":" ++ b
 
 fmtDogStatsdDatagram :: Stat -> Int -> Type -> Tags -> String
-fmtDogStatsdDatagram stat value stat_type [] = fmtDatagram stat value stat_type
-fmtDogStatsdDatagram stat value stat_type tags =
-  let statsdDatagram = fmtDatagram stat value stat_type
+fmtDogStatsdDatagram stat value statType [] = fmtDatagram stat value statType
+fmtDogStatsdDatagram stat value statType tags =
+  let statsdDatagram = fmtDatagram stat value statType
       tagSuffix = intercalate "," $ fmtTag <$> tags
   in printf "%s|#%s" statsdDatagram tagSuffix

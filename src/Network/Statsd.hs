@@ -52,4 +52,4 @@ histogram :: UdpClient -> Stat -> Int -> IO ()
 histogram client stat value = void . send client $ fmtDatagram stat value Histogram
 
 fmtDatagram :: Stat -> Int -> Type -> String
-fmtDatagram stat value stat_type = printf "%s:%s|%s" stat (show value) (show stat_type)
+fmtDatagram stat value statType = printf "%s:%s|%s" stat (show value) (show statType)
