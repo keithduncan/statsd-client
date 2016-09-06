@@ -14,7 +14,7 @@ module Network.Statsd (
   histogram,
 ) where
 
-import Network.Statsd.UdpClient(UdpClient(..), fromURI, send)
+import Network.Statsd.UdpClient(UdpClient, fromURI, send)
 
 import Control.Monad
 import Data.Maybe

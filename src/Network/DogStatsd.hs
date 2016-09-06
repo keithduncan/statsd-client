@@ -9,7 +9,7 @@ module Network.DogStatsd (
 ) where
 
 import Network.Statsd (Stat, Type(..), fmtDatagram)
-import Network.Statsd.UdpClient(UdpClient(..), fromURI, send)
+import Network.Statsd.UdpClient(UdpClient, fromURI, send)
 
 import Control.Monad
 import Data.Maybe
