@@ -20,7 +20,7 @@ A port of [github/statsd-ruby](http://github.com/github/statsd-ruby) to Haskell.
 Run this helper script to listen to local UDP traffic:
 
 ``` sh
-ruby script/listen.rb
+script/listen
 ```
 
 Start sending metrics
