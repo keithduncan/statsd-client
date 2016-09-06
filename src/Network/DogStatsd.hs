@@ -19,6 +19,8 @@ import Text.Printf
 import Network.URI
 
 type Tags = [(String, String)]
+type Name = String
+type Value = String
 
 dogStatsdClient :: String -> IO UdpClient
 dogStatsdClient url = (fromURI . fromJust . parseURI) url
@@ -41,7 +43,7 @@ timing client stat value tags = void . send client $ fmtDogStatsdDatagram stat (
 histogram :: UdpClient -> Stat -> Int -> Tags -> IO ()
 histogram client stat value tags = void . send client $ fmtDogStatsdDatagram stat value Histogram tags
 
-fmtTag :: (String, String) -> String
+fmtTag :: (Name, Value) -> String
 fmtTag (a, "") = a
 fmtTag (a, b) = a ++ ":" ++ b
 
