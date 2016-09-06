@@ -31,7 +31,7 @@ instance Show Type where
   show Histogram = "h"
 
 statsdClient :: String -> IO UdpClient
-statsdClient url = (fromURI . fromJust . parseURI) url
+statsdClient = fromURI . fromJust . parseURI
 
 increment :: UdpClient -> Stat -> IO ()
 increment client stat = count client stat 1

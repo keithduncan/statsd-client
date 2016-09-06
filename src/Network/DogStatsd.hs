@@ -23,7 +23,7 @@ type Name = String
 type Value = String
 
 dogStatsdClient :: String -> IO UdpClient
-dogStatsdClient url = (fromURI . fromJust . parseURI) url
+dogStatsdClient = fromURI . fromJust . parseURI
 
 increment :: UdpClient -> Stat -> Tags -> IO ()
 increment client stat = count client stat 1
