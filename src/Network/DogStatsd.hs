@@ -18,9 +18,9 @@ import Data.Time.Units
 import Text.Printf
 import Network.URI
 
-type Tags = [(String, String)]
 type Name = String
 type Value = String
+type Tags = [(Name, Value)]
 
 dogStatsdClient :: String -> IO UdpClient
 dogStatsdClient = fromURI . fromJust . parseURI
