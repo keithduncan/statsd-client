@@ -2,5 +2,7 @@ language: haskell
 ghc:
   - 7.10
   - 8.0
+before_install:
+  - sudo apt-get install cabal-install-1.24
 notifications:
   email: false
