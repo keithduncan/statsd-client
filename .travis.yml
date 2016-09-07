@@ -20,7 +20,6 @@ matrix:
         sources:
         - hvr-ghc
         packages:
-        - stack
         - ghc-7.10.3
   - env: GHCVER=8.0.1 STACK_YAML=stack.yaml
     addons:
@@ -28,10 +27,13 @@ matrix:
         sources:
         - hvr-ghc
         packages:
-        - stack
         - ghc-8.0.1
 
 before_install:
+# Download and unpack the stack executable
+- mkdir -p $HOME/.local/bin
+- export PATH=$HOME/.local/bin:$PATH
+- travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C $HOME/.local/bin '*/stack'
 - export PATH=/opt/ghc/$GHCVER/bin:$PATH
 
 script:
