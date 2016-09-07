@@ -1,8 +1,41 @@
-language: haskell
-ghc:
-  - '7.10'
-  - '8.0'
+# start with a minimal image
+language: c
+
+# use container infrastructure
+sudo: false
+
+# share these between builds
+cache:
+  directories:
+  - $HOME/.ghc
+  - $HOME/.cabal
+  - $HOME/.stack
+
+# build on both GHC 7.10.3 and 8.0.1
+matrix:
+  include:
+  - env: GHCVER=7.10.3 STACK_YAML=stack.yaml
+    addons:
+      apt:
+        sources:
+        - hvr-ghc
+        packages:
+        - stack
+        - ghc-7.10.3
+  - env: GHCVER=8.0.1 STACK_YAML=stack.yaml
+    addons:
+      apt:
+        sources:
+        - hvr-ghc
+        packages:
+        - stack
+        - ghc-8.0.1
+
 before_install:
-  - sudo apt-get install cabal-install-1.24
+- export PATH=/opt/ghc/$GHCVER/bin:$PATH
+
+script:
+- stack --no-terminal --skip-ghc-check test
+
 notifications:
   email: false
