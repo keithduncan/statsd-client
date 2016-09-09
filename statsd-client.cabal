@@ -10,7 +10,7 @@ stability: experimental
 homepage: https://github.com/keithduncan/statsd-client
 bug-reports: https://github.com/keithduncan/statsd-client/issues
 synopsis: Statsd UDP client
-description: A port of http://github.com/github/statsd-ruby to Haskell.
+description: Statsd UDP client
 category: Network
 author: Keith Duncan
 
